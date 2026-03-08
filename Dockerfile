@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:22-slim
 
 # Устанавливаем Git и зависимости
 RUN apt-get update && apt-get install -y git && \
@@ -9,11 +9,14 @@ WORKDIR /app
 # Копируем package.json если есть
 COPY package*.json ./
 
-# Устанавливаем OpenClaw (первая попытка может упасть, но npm потом доустановит)
-RUN npm install -g openclaw@latest || true
+# Отключаем установку браузера (если не нужен)
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
-# Повторяем установку — после первой неудачной npm должен подхватить registry-версию [citation:1]
-RUN npm install -g openclaw@latest
+# Кешируем npm глобально
+RUN npm config set cache /tmp/npm-cache --global
+
+# Устанавливаем OpenClaw
+RUN npm install -g openclaw@latest --no-audit --no-fund --loglevel=error
 
 # Открываем порт
 EXPOSE 8080
